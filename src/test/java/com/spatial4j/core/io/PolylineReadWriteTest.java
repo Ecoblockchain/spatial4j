@@ -17,16 +17,25 @@
 
 package com.spatial4j.core.io;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.StringWriter;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Locale;
 
 import org.jeo.geom.GeomBuilder;
+import org.jeo.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.spatial4j.core.context.jts.JtsSpatialContext;
+import com.spatial4j.core.context.jts.JtsSpatialContextFactory;
 import com.spatial4j.core.io.PolylineWriter.Encoder;
 import com.spatial4j.core.io.jts.JtsPolylineWriter;
+import com.spatial4j.core.shape.JtsGeometryTest;
 import com.spatial4j.core.shape.Shape;
 import com.vividsolutions.jts.geom.GeometryFactory;
 
@@ -42,6 +51,7 @@ public class PolylineReadWriteTest {
   @Before
   public void setUp() {
     ctx = JtsSpatialContext.GEO;
+    
     gb = new GeomBuilder();
     reader = ctx.getFormats().getReader(ShapeIO.POLY);
     writer = ctx.getFormats().getWriter(ShapeIO.POLY);
@@ -50,36 +60,71 @@ public class PolylineReadWriteTest {
     Assert.assertNotNull(writer);
   }
   
+
+  @Test
+  public void testWriteTestJSON() throws Exception {
+    
+    //Fiji is a group of islands crossing the dateline.
+    String wktFiji = JtsGeometryTest.readFirstLineFromRsrc("/fiji.wkt.txt");
+    String wktRussia = JtsGeometryTest.readFirstLineFromRsrc("/russia.wkt.txt");
+
+    
+    ShapeWriter geojson = ctx.getFormats().getWriter(ShapeIO.GeoJSON);
+    ShapeWriter wktwriter = ctx.getFormats().getWriter(ShapeIO.WKT);
+    
+    ArrayList<Shape> shapes = new ArrayList<Shape>();
+    shapes.add(point());
+    shapes.add(line());
+    shapes.add(polygon1());
+    shapes.add(polygon2());
+    shapes.add(multiLine());
+    shapes.add(multiPoint());
+    shapes.add(polygon1().getBoundingBox());
+  //  shapes.add(ctx.readShapeFromWkt(wktFiji)); // fiji
+  //  shapes.add(ctx.readShapeFromWkt(wktRussia)); // fiji
+    Iterator<Shape> iter = shapes.iterator();
+    
+    BinaryCodec codec = ctx.getBinaryCodec();
+    NumberFormat nf = NumberFormat.getPercentInstance(Locale.ROOT);
+    StringWriter out = new StringWriter();
+    out.write("{ \"test\": [\n");
+    while(iter.hasNext()) {
+      Shape shape = iter.next();
+      String enc = writer.toString(shape);
+      String gjs = geojson.toString(shape);
+      String wkt = wktwriter.toString(shape);
+
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      DataOutputStream bin = new DataOutputStream(bos);
+      codec.writeShape(bin, shape);
+      
+      float perJ = enc.length()/(float)gjs.length();
+      float perW = enc.length()/(float)wkt.length();
+      float perB = enc.length()/(float)bos.size();
+      
+      out.write("{\"wkt\" :\""+wkt+"\",\n");
+      out.write(" \"json\":"+gjs+",\n");
+      out.write(" \"poly\":\""+enc+"\",\n");
+      out.write(" \"compare_json\": \""+enc.length()+" vs "+gjs.length()+" chars. "+nf.format(perJ)+"\",\n");
+      out.write(" \"compare_wkt\" : \""+enc.length()+" vs "+wkt.length()+" chars. "+nf.format(perW)+"\",\n");
+      out.write(" \"compare_bin\" : \""+enc.length()+" vs "+bos.size()+" bytes. "+nf.format(perB)+"\"\n");
+      out.write("}");
+      if(iter.hasNext()) {
+        out.write(",\n");
+      }
+    }
+    out.write("]}");   
+    
+    System.out.println( out );
+  }
+  
+  
+  
   public void checkEqual(Shape expected, Shape actual) {
     // GeoJSON has limited numberic precision so the off by .0000001 does not affect its equals
     ShapeWriter writer = ctx.getFormats().getWriter(ShapeIO.GeoJSON);
     Assert.assertEquals(writer.toString(expected), writer.toString(actual));
   }
-  
-
-  @Test
-  public void testEncodePolylie() throws Exception {
-    
-    Encoder encoder = new Encoder(new StringWriter());
-    encoder.write(1, 2);
-    encoder.write(3, 4);
-    encoder.write(5, 6);
-    encoder.write(7, 8);
-    encoder.write(9, 10);
-    
-    String v = encoder.writer.toString();
-    System.out.println( v );
-    
-    
-    PolylineWriter writer = new JtsPolylineWriter(JtsSpatialContext.GEO, null);
-
-    System.out.println( "LINE:  " + writer.toString(line()) );
-    System.out.println( "POLY1: " + writer.toString(polygon1()) );
-    System.out.println( "POLY1: " + writer.toString(polygon2()) );
-    System.out.println( "COLLECTION: " + writer.toString(this.multiLine()) );
-    System.out.println( "COLLECTION: " + writer.toString(this.multiPoint()) );
-  }
-  
   
   @Test
   public void testWriteThenReadPoint() throws Exception {

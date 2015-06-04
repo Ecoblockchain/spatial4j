@@ -236,8 +236,8 @@ public class JtsGeometryTest extends AbstractTestShapes {
     System.out.println("Fiji Area: "+shape.getArea(ctx));
   }
 
-  private String readFirstLineFromRsrc(String wktRsrcPath) throws IOException {
-    InputStream is = getClass().getResourceAsStream(wktRsrcPath);
+  public static String readFirstLineFromRsrc(String wktRsrcPath) throws IOException {
+    InputStream is = JtsGeometryTest.class.getResourceAsStream(wktRsrcPath);
     assertNotNull(is);
     try {
       BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));

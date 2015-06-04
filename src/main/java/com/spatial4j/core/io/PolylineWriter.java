@@ -21,7 +21,6 @@ package com.spatial4j.core.io;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.text.NumberFormat;
 import java.util.Iterator;
 
 import com.spatial4j.core.context.SpatialContext;
@@ -35,7 +34,6 @@ import com.spatial4j.core.shape.ShapeCollection;
 import com.spatial4j.core.shape.impl.BufferedLine;
 import com.spatial4j.core.shape.impl.BufferedLineString;
 import com.spatial4j.core.shape.impl.GeoCircle;
-import com.vividsolutions.jts.algorithm.locate.PointOnGeometryLocator;
 
 
 

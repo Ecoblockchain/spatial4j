@@ -18,8 +18,6 @@
 package com.spatial4j.core.io.jts;
 
 import java.io.IOException;
-import java.io.Writer;
-import java.text.NumberFormat;
 
 import com.spatial4j.core.context.SpatialContextFactory;
 import com.spatial4j.core.context.jts.JtsSpatialContext;

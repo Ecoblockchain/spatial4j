@@ -20,6 +20,7 @@ package com.spatial4j.core.io;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,13 +53,8 @@ public class PolylineReader implements ShapeReader {
   }
   
   @Override
-  public final Shape read(Reader reader) throws IOException, ParseException {
-    return read("xxx");
-  }
-
-  @Override
   public Shape read(Object value) throws IOException, ParseException, InvalidShapeException {
-    return read(value.toString().trim());
+    return read(new StringReader(value.toString().trim()));
   }
 
   @Override
@@ -67,8 +63,9 @@ public class PolylineReader implements ShapeReader {
     char first = v.charAt(0);
     if(first >= '0' && first <= '9') {
       try {
-        return read(v);
+        return read(new StringReader(v));
       } catch (ParseException e) {
+      } catch (IOException e) {
       }
     }
     return null;
@@ -78,13 +75,10 @@ public class PolylineReader implements ShapeReader {
   // Read GeoJSON
   // --------------------------------------------------------------
 
-  public final Shape read(CharSequence input) throws ParseException
+  @Override
+  public final Shape read(Reader r) throws ParseException, IOException
   {
-    if(input==null||input.length()==0) {
-      throw new IllegalArgumentException("Invalid input");
-    }
-    XReader reader = new XReader();
-    reader.setInput(input);
+    XReader reader = new XReader(r);
     Double arg = null;
     
     Shape last = null;
@@ -95,7 +89,7 @@ public class PolylineReader implements ShapeReader {
         if(event == PolylineWriter.KEY_SEPERATOR) {
           continue; // read the next key
         }
-        throw new ParseException("expecting a shape key.  not '"+event+"'", reader.index);
+        throw new ParseException("expecting a shape key.  not '"+event+"'", -1);
       }
 
       if(last!=null) {
@@ -110,11 +104,11 @@ public class PolylineReader implements ShapeReader {
         reader.readKey(); // skip the key
         arg = reader.readDouble();
         if(reader.readKey()!=PolylineWriter.KEY_ARG_END) {
-          throw new ParseException("expecting an argument end", reader.index);
+          throw new ParseException("expecting an argument end", -1);
         }
       }
       if(reader.isEvent()) {
-        throw new ParseException("Invalid input. Event should be followed by data", reader.index);
+        throw new ParseException("Invalid input. Event should be followed by data", -1);
       }
       
       switch(event) {
@@ -166,30 +160,27 @@ public class PolylineReader implements ShapeReader {
     return last;
   }
   
-  protected Shape readPolygon(XReader reader) {
+  protected Shape readPolygon(XReader reader) throws IOException {
     throw new IllegalArgumentException("This reader does not support polygons");
   }
 
   /**
-  * from Apache 2.0 licensed:
-  * https://github.com/googlemaps/android-maps-utils/blob/master/library/src/com/google/maps/android/PolyUtil.java
-*/
+   * from Apache 2.0 licensed:
+   * https://github.com/googlemaps/android-maps-utils/blob/master/library/src/com/google/maps/android/PolyUtil.java
+   */
   public static class XReader {
-    int index = 0;
     int lat = 0;
     int lng = 0;
     
-    CharSequence input;
+    int head = -1;
+    final Reader input;
     
-    public XReader() {
-    }
-    
-    public void setInput(CharSequence input) {
+    public XReader(final Reader input) throws IOException {
       this.input = input;
-      index = lat = lng = 0;
+      head = input.read();
     }
     
-    public List<Point> readPoints(SpatialContext ctx) {
+    public List<Point> readPoints(SpatialContext ctx) throws IOException {
       List<Point> points = new ArrayList<Point>();
       while(isData()) {
         points.add(ctx.makePoint(readLat(), readLng()));
@@ -197,7 +188,7 @@ public class PolylineReader implements ShapeReader {
       return points;
     }
     
-    public List<double[]> readPoints() {
+    public List<double[]> readPoints() throws IOException {
       List<double[]> points = new ArrayList<double[]>();
       while(isData()) {
         points.add(new double[]{readLat(), readLng()});
@@ -205,50 +196,54 @@ public class PolylineReader implements ShapeReader {
       return points;
     }
     
-    public double readLat() {
+    public double readLat() throws IOException {
       lat += readInt();
       return lat * 1e-5;
     }
 
-    public double readLng() {
+    public double readLng() throws IOException {
       lng += readInt();
       return lng * 1e-5;
     }
     
-    public double readDouble() {
+    public double readDouble() throws IOException {
       return readInt() * 1e-5;
     }
     
-    public char peek() {
-      return input.charAt(index);
+    public int peek() {
+      return head;
     }
 
-    public char readKey() {
+    public char readKey() throws IOException {
       lat = lng = 0; // reset the offset
-      return input.charAt(index++);
+      char key = (char)head;
+      head = input.read();
+      return key;
     }
 
     public boolean isData() {
-      return( index < input.length() && input.charAt(index) >= '?');
+      return head >= '?';
     }
 
     public boolean isDone() {
-      return index >= input.length();
+      return head < 0;
     }
     
     public boolean isEvent() {
-      return index < input.length() && input.charAt(index) < '?';
+      return head > 0 && head < '?';
     }
     
-    int readInt()
+    int readInt() throws IOException
     {
       int b;
       int result = 1;
       int shift = 0;
       do {
-        b = input.charAt(index++) - 63 - 1;
+        b = head - 63 - 1;
         result += b << shift;
         shift += 5;
+        
+        head = input.read();
       } while (b >= 0x1f);
       return (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
     }

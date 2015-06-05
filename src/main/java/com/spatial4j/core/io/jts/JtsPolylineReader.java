@@ -17,6 +17,7 @@
 
 package com.spatial4j.core.io.jts;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -90,7 +91,7 @@ public class JtsPolylineReader extends PolylineReader {
   }
   
   @Override
-  protected Shape readPolygon(XReader reader) {
+  protected Shape readPolygon(XReader reader) throws IOException {
     GeometryFactory gf = ctx.getGeometryFactory();
     List<double[]> outer = reader.readPoints();
 

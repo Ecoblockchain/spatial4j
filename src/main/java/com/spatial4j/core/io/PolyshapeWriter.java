@@ -37,9 +37,9 @@ import com.spatial4j.core.shape.impl.GeoCircle;
 
 
 
-public class PolylineWriter implements ShapeWriter {
+public class PolyshapeWriter implements ShapeWriter {
 
-  public PolylineWriter(SpatialContext ctx, SpatialContextFactory factory) {
+  public PolyshapeWriter(SpatialContext ctx, SpatialContextFactory factory) {
 
   }
 

@@ -33,10 +33,10 @@ import com.spatial4j.core.shape.Shape;
 
 
 
-public class PolylineReader implements ShapeReader {
+public class PolyshapeReader implements ShapeReader {
   final SpatialContext ctx;
 
-  public PolylineReader(SpatialContext ctx, SpatialContextFactory factory) {
+  public PolyshapeReader(SpatialContext ctx, SpatialContextFactory factory) {
     this.ctx = ctx;
   }
 
@@ -86,7 +86,7 @@ public class PolylineReader implements ShapeReader {
     while(!reader.isDone()) {
       char event = reader.readKey();
       if(event<'0' || event > '9') {
-        if(event == PolylineWriter.KEY_SEPERATOR) {
+        if(event == PolyshapeWriter.KEY_SEPERATOR) {
           continue; // read the next key
         }
         throw new ParseException("expecting a shape key.  not '"+event+"'", -1);
@@ -100,10 +100,10 @@ public class PolylineReader implements ShapeReader {
       }
       arg = null;
       
-      if(reader.peek()==PolylineWriter.KEY_ARG_START) {
+      if(reader.peek()==PolyshapeWriter.KEY_ARG_START) {
         reader.readKey(); // skip the key
         arg = reader.readDouble();
-        if(reader.readKey()!=PolylineWriter.KEY_ARG_END) {
+        if(reader.readKey()!=PolyshapeWriter.KEY_ARG_END) {
           throw new ParseException("expecting an argument end", -1);
         }
       }
@@ -112,11 +112,11 @@ public class PolylineReader implements ShapeReader {
       }
       
       switch(event) {
-        case PolylineWriter.KEY_POINT: {
+        case PolyshapeWriter.KEY_POINT: {
           last = ctx.makePoint(reader.readLat(), reader.readLng());
           break;
         }
-        case PolylineWriter.KEY_LINE: {
+        case PolyshapeWriter.KEY_LINE: {
           if(arg!=null) {
             last = ctx.makeBufferedLineString(reader.readPoints(ctx), arg.doubleValue());
           }
@@ -125,13 +125,13 @@ public class PolylineReader implements ShapeReader {
           }
           break;
         }
-        case PolylineWriter.KEY_BOX: {
+        case PolyshapeWriter.KEY_BOX: {
           Point lowerLeft = ctx.makePoint(reader.readLat(), reader.readLng());
           Point upperRight = ctx.makePoint(reader.readLat(), reader.readLng());
           last = ctx.makeRectangle(lowerLeft, upperRight);
           break;
         }
-        case PolylineWriter.KEY_MULTIPOINT : {
+        case PolyshapeWriter.KEY_MULTIPOINT : {
           List<Point> points = reader.readPoints(ctx);
           if(shapes==null) {
             shapes = new ArrayList<Shape>(points.size()+1);
@@ -139,13 +139,13 @@ public class PolylineReader implements ShapeReader {
           shapes.addAll(points);
           break;
         }
-        case PolylineWriter.KEY_CIRCLE : {
+        case PolyshapeWriter.KEY_CIRCLE : {
           if(arg==null) {
             throw new IllegalArgumentException("the input should have a radius argument");
           }
           last = ctx.makeCircle(reader.readLat(), reader.readLng(), arg.doubleValue());
         }
-        case PolylineWriter.KEY_POLYGON: {
+        case PolyshapeWriter.KEY_POLYGON: {
           last = readPolygon(reader);
         }
       }

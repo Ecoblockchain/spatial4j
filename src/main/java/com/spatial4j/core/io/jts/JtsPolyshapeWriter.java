@@ -21,7 +21,7 @@ import java.io.IOException;
 
 import com.spatial4j.core.context.SpatialContextFactory;
 import com.spatial4j.core.context.jts.JtsSpatialContext;
-import com.spatial4j.core.io.PolylineWriter;
+import com.spatial4j.core.io.PolyshapeWriter;
 import com.spatial4j.core.shape.Shape;
 import com.spatial4j.core.shape.jts.JtsGeometry;
 import com.vividsolutions.jts.geom.Coordinate;
@@ -33,11 +33,11 @@ import com.vividsolutions.jts.geom.MultiPoint;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 
-public class JtsPolylineWriter extends PolylineWriter {
+public class JtsPolyshapeWriter extends PolyshapeWriter {
 
   protected final JtsSpatialContext ctx;
 
-  public JtsPolylineWriter(JtsSpatialContext ctx, SpatialContextFactory factory) {
+  public JtsPolyshapeWriter(JtsSpatialContext ctx, SpatialContextFactory factory) {
     super(ctx, factory);
     this.ctx = ctx;
   }
@@ -64,7 +64,7 @@ public class JtsPolylineWriter extends PolylineWriter {
   }
 
   protected void write(Encoder output, Polygon p) throws IOException {
-    output.write(PolylineWriter.KEY_POLYGON);
+    output.write(PolyshapeWriter.KEY_POLYGON);
     write(output, p.getExteriorRing().getCoordinateSequence());
     for (int i = 0; i < p.getNumInteriorRing(); i++) {
       output.startRing();
@@ -75,7 +75,7 @@ public class JtsPolylineWriter extends PolylineWriter {
   public void write(Encoder output, Geometry geom) throws IOException {
     if (geom instanceof Point) {
       Point v = (Point) geom;
-      output.write(PolylineWriter.KEY_POINT);
+      output.write(PolyshapeWriter.KEY_POINT);
       write(output, v.getCoordinateSequence());
       return;
     } else if (geom instanceof Polygon) {
@@ -83,12 +83,12 @@ public class JtsPolylineWriter extends PolylineWriter {
       return;
     } else if (geom instanceof LineString) {
       LineString v = (LineString) geom;
-      output.write(PolylineWriter.KEY_LINE);
+      output.write(PolyshapeWriter.KEY_LINE);
       write(output, v.getCoordinateSequence());
       return;
     } else if (geom instanceof MultiPoint) {
       MultiPoint v = (MultiPoint) geom;
-      output.write(PolylineWriter.KEY_MULTIPOINT);
+      output.write(PolyshapeWriter.KEY_MULTIPOINT);
       write(output, v.getCoordinates());
       return;
     } else if (geom instanceof GeometryCollection) {

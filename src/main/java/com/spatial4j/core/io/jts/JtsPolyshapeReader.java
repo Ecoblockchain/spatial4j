@@ -23,11 +23,8 @@ import java.util.List;
 
 import com.spatial4j.core.context.SpatialContextFactory;
 import com.spatial4j.core.context.jts.JtsSpatialContext;
-import com.spatial4j.core.io.GeoJSONReader;
-import com.spatial4j.core.io.PolylineReader;
-import com.spatial4j.core.io.PolylineReader.XReader;
-import com.spatial4j.core.io.PolylineWriter;
-import com.spatial4j.core.shape.Point;
+import com.spatial4j.core.io.PolyshapeReader;
+import com.spatial4j.core.io.PolyshapeWriter;
 import com.spatial4j.core.shape.Shape;
 import com.spatial4j.core.shape.jts.JtsGeometry;
 import com.spatial4j.core.shape.jts.JtsPoint;
@@ -38,11 +35,11 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LinearRing;
 import com.vividsolutions.jts.geom.impl.PackedCoordinateSequenceFactory;
 
-public class JtsPolylineReader extends PolylineReader {
+public class JtsPolyshapeReader extends PolyshapeReader {
 
   protected final JtsSpatialContext ctx;
 
-  public JtsPolylineReader(JtsSpatialContext ctx, SpatialContextFactory factory) {
+  public JtsPolyshapeReader(JtsSpatialContext ctx, SpatialContextFactory factory) {
     super(ctx, factory);
     this.ctx = ctx;
   }
@@ -97,9 +94,9 @@ public class JtsPolylineReader extends PolylineReader {
 
     LinearRing shell = gf.createLinearRing(coordseq(outer));
     LinearRing[] holes = null;
-    if(!reader.isDone() && reader.peek()==PolylineWriter.KEY_ARG_START) {
+    if(!reader.isDone() && reader.peek()==PolyshapeWriter.KEY_ARG_START) {
       List<LinearRing> list = new ArrayList<LinearRing>();
-      while(reader.isEvent() && reader.peek()==PolylineWriter.KEY_ARG_START) {
+      while(reader.isEvent() && reader.peek()==PolyshapeWriter.KEY_ARG_START) {
         reader.readKey(); // eat the event;
         list.add(gf.createLinearRing(coordseq(reader.readPoints())));
       }

@@ -4,10 +4,10 @@ Spatial4j supports reading and writing Shapes to and from strings
 
  * WKT
  * GeoJSON
- * Polyline (custom format based on https://developers.google.com/maps/documentation/utilities/polylinealgorithm)
+ * Polyshape (custom format based on https://developers.google.com/maps/documentation/utilities/polylinealgorithm)
 
 
-## Polyline
+## Polyshape
 
 The standard 'Encoded Polyline Algorithm Format' offers a compact way to encode a list of lat/lon pairs into a simple ASCII string.  In Spatial4j, we have extended this format to support a wider diversity of shapes.  In particular an encoded string has:
 
@@ -37,7 +37,7 @@ Each Shape in a geometry collection is seperated by a space
 ## Polyline Examples & tests
 In general, it looks like this format is ~25% as big as GeoJSON and ~50% as big as WKT.  This is with data with low precision numbers (100.1 vs 100.123456) so that may be a low estimate
 
-For this data, it looks like the polyline format is ~1/3-~1/2 the size as the binary codec.  
+For this data, it looks like the polyshape format is ~1/3-~1/2 the size as the binary codec.  
 
 ```
 { "test": [

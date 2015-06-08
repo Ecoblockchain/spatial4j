@@ -17,6 +17,9 @@
 
 package com.spatial4j.core.io;
 
+import java.io.IOException;
+import java.text.ParseException;
+
 import org.jeo.geom.GeomBuilder;
 import org.junit.Assert;
 import org.junit.Before;
@@ -24,6 +27,7 @@ import org.junit.Test;
 
 import com.spatial4j.core.context.jts.JtsSpatialContext;
 import com.spatial4j.core.context.jts.JtsSpatialContextFactory;
+import com.spatial4j.core.exception.InvalidShapeException;
 import com.spatial4j.core.shape.Shape;
 
 public abstract class GeneralReadWriteShapeTest {
@@ -47,47 +51,59 @@ public abstract class GeneralReadWriteShapeTest {
 
   protected abstract ShapeWriter getShapeWriterForTests();
   
-  
-  public void checkEqual(Shape expected, Shape actual) {
-    // GeoJSON has limited numberic precision so the off by .0000001 does not affect its equals
-    ShapeWriter writer = getShapeWriterForTests();
-    Assert.assertEquals(writer.toString(expected), writer.toString(actual));
+
+  protected void assertRoundTrip(Shape shape) {
+    try {
+      Shape out = getShapeReader().read(getShapeWriter().toString(shape));
+
+      // GeoJSON has limited numberic precision so the off by .0000001 does not affect its equals
+      ShapeWriter writer = getShapeWriterForTests();
+      Assert.assertEquals(writer.toString(shape), writer.toString(out));
+      
+      Assert.assertEquals(shape, out);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } catch (InvalidShapeException e) {
+      throw new RuntimeException(e);
+    } catch (ParseException e) {
+      throw new RuntimeException(e);
+    }
   }
   
   @Test
   public void testWriteThenReadPoint() throws Exception {
-    checkEqual(point(), getShapeReader().read(getShapeWriter().toString(point())));
+    assertRoundTrip(point());
   }
 
   @Test
   public void testWriteThenReadLineString() throws Exception {
-    checkEqual(line(), getShapeReader().read(getShapeWriter().toString(line())));
+    assertRoundTrip(line());
   }
 
   @Test
   public void testWriteThenReadPolygon() throws Exception {
-    checkEqual(polygon1(), getShapeReader().read(getShapeWriter().toString(polygon1())));
-    checkEqual(polygon2(), getShapeReader().read(getShapeWriter().toString(polygon2())));
+    assertRoundTrip(polygon1());
+    assertRoundTrip(polygon2());
   }
 
   @Test
   public void testWriteThenReadMultiPoint() throws Exception {
-    checkEqual(multiPoint(), getShapeReader().read(getShapeWriter().toString(multiPoint())));
+    assertRoundTrip(multiPoint());
   }
 
   @Test
   public void testWriteThenReadMultiLineString() throws Exception {
-    checkEqual(multiLine(), getShapeReader().read(getShapeWriter().toString(multiLine())));
+    assertRoundTrip(multiLine());
   }
 
   @Test
   public void testWriteThenReadMultiPolygon() throws Exception {
-    checkEqual(multiPolygon(), getShapeReader().read(getShapeWriter().toString(multiPolygon())));
+    assertRoundTrip(multiPolygon());
   }
 
   @Test
   public void testWriteThenReadRectangle() throws Exception {
-    checkEqual(polygon1().getBoundingBox(), getShapeReader().read(getShapeWriter().toString(polygon1().getBoundingBox())));
+    assertRoundTrip(polygon1().getBoundingBox());
   }
   
   
